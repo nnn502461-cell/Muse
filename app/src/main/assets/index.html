@@ -121,7 +121,25 @@ header button{transition:transform .5s var(--sp),background .3s}header button:ac
 .card input,.card textarea{background:rgba(255,255,255,.18);border:1px solid var(--gb);box-shadow:inset 0 1px 3px rgba(0,0,0,.06);transition:border-color .3s,box-shadow .3s}
 #dlg.out{opacity:0;pointer-events:none}#dlg.out .card{transform:translateY(60px);opacity:0}
 .a pre{background:rgba(30,26,22,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),var(--sh)}
+/* ===== v4 apple liquid glass: lensing rim, specular edge, tilt light ===== */
+:root{--la:150deg;--rim:rgba(255,255,255,.95);--rim2:rgba(255,255,255,.6);--gl:rgba(255,255,255,.3);--lb:1.5;--gs:inset 0 1px 1px rgba(255,255,255,.75),inset 0 -8px 16px rgba(255,255,255,.16),inset 0 10px 20px rgba(255,255,255,.12),0 1px 2px rgba(70,45,25,.06),0 12px 32px rgba(70,45,25,.14)}
+@media(prefers-color-scheme:dark){:root{--rim:rgba(255,255,255,.55);--rim2:rgba(255,255,255,.26);--gl:rgba(255,255,255,.06);--gs:inset 0 1px 1px rgba(255,255,255,.22),inset 0 -8px 16px rgba(255,255,255,.04),inset 0 10px 20px rgba(255,255,255,.03),0 1px 2px rgba(0,0,0,.3),0 14px 36px rgba(0,0,0,.5)}}
+html.lq{--gl:rgba(255,255,255,.2)}
+@media(prefers-color-scheme:dark){html.lq{--gl:rgba(40,36,32,.28)}}
+header,.box,.chip,.hint,.tools span,.set,.pv button,.row button{background:radial-gradient(110px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,calc(var(--ha,0)*.5)),transparent 70%),linear-gradient(var(--la),rgba(255,255,255,.2),rgba(255,255,255,0) 55%),var(--gl);border-color:transparent}
+.box,.hint,.tools span,.set,.pv button,.row button{position:relative}
+header::before,.box::before,.chip::before,.hint::before,.tools span::before,.set::before,.pv button::before,.row button::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.2px;pointer-events:none;background:linear-gradient(var(--la),var(--rim),rgba(255,255,255,.1) 26%,transparent 48%,rgba(255,255,255,.1) 74%,var(--rim2));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.pv .s::before,.row .pri::before{opacity:.6}
+header,.box{--lb:2}
+.box:focus-within{box-shadow:0 0 0 4px rgba(var(--acr),.12),var(--gs)}
+#main::before{content:"";position:absolute;left:0;right:0;top:0;height:100px;z-index:2;pointer-events:none;background:linear-gradient(rgba(var(--bgr),.72),rgba(var(--bgr),0));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);-webkit-mask:linear-gradient(#000 35%,transparent);mask:linear-gradient(#000 35%,transparent)}
+.chip:active{transform:scale(1.025)}.tools span:active,.pv button:active,.row button:active,.hint:active{transform:scale(1.07)}.set:active{transform:scale(1.02)}
+header button:active{transform:scale(1.14);background:rgba(255,255,255,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 14px rgba(0,0,0,.08)}
+#go:active{transform:scale(1.12)}
+#side,.card{box-shadow:inset 0 1px 1px rgba(255,255,255,.6),inset 1px 0 0 rgba(255,255,255,.25),var(--sh)}
+@media(prefers-reduced-transparency:reduce){header,.box,.chip,.hint,.card,#side{background:var(--cd)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}}
 </style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="lgd"></defs></svg>
 <div id="side"><div class="sh"><b>Muse</b><button onclick="nw()">＋ 新对话</button></div><div id="list"></div><button class="set" onclick="openSet()">⚙ 设置</button></div>
 <div id="mask" onclick="drawer(0)"></div>
 <div id="main"><header><button onclick="drawer(1)">☰</button><span id="ttl">Muse</span><button onclick="nw()">✎</button></header>
@@ -182,5 +200,23 @@ addEventListener('pointerdown',e=>{const t=e.target.closest(G);if(!t)return;hot=
 function mv(e){if(!hot)return;const r=hot.getBoundingClientRect();hot.style.setProperty('--mx',e.clientX-r.left+'px');hot.style.setProperty('--my',e.clientY-r.top+'px')}
 addEventListener('pointermove',mv,{passive:true});
 const up=()=>{if(hot){hot.style.setProperty('--ha',0);hot=null}};addEventListener('pointerup',up);addEventListener('pointercancel',up);
-list();render();ui();pad();if(!C().keys[C().p])openSet();
+const lq=/Chrome\/(\d+)/.exec(navigator.userAgent),LQ=!!lq&&+lq[1]>=90&&!matchMedia('(prefers-reduced-transparency:reduce)').matches,LM={};
+if(LQ)document.documentElement.classList.add('lq');
+// 位移贴图：圆角矩形边缘一圈凸透镜斜面，越靠边越往内取样，产生苹果式的折射弯曲
+function lmap(w,h,r,b){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),d=x.createImageData(w,h),D=d.data;
+for(let j=0;j<h;j++)for(let i=0;i<w;i++){const px=i+.5-w/2,py=j+.5-h/2,qx=Math.abs(px)-w/2+r,qy=Math.abs(py)-h/2+r,ox=Math.max(qx,0),oy=Math.max(qy,0),ol=Math.hypot(ox,oy),
+dist=r-ol-Math.min(Math.max(qx,qy),0),t=Math.min(1,Math.max(0,1-dist/b)),m=1-Math.sqrt(1-t*t),k=(j*w+i)*4;let nx=0,ny=0;
+if(ol>0){nx=ox/ol*Math.sign(px);ny=oy/ol*Math.sign(py)}else if(qx>qy)nx=Math.sign(px);else ny=Math.sign(py);
+D[k]=128-nx*m*127;D[k+1]=128-ny*m*127;D[k+2]=128;D[k+3]=255}
+x.putImageData(d,0,0);return c.toDataURL()}
+function lens(el){const w=el.offsetWidth,h=el.offsetHeight;if(!w||!h)return;const cs=getComputedStyle(el),r=Math.round(Math.min(parseFloat(cs.borderTopLeftRadius)||0,w/2,h/2)),bl=+cs.getPropertyValue('--lb')||1.5,id=`lg${w}x${h}r${r}b${bl}`;
+if(!LM[id]){LM[id]=1;const b=Math.min(h/2,24),s=Math.min(Math.max(h*.7,14),44),u=lmap(w,h,r,b),dm=(n,v)=>`<feDisplacementMap in="bl" in2="m" scale="${v}" xChannelSelector="R" yChannelSelector="G" result="d${n}"/>`,ch=(n,v)=>`<feColorMatrix in="d${n}" type="matrix" values="${v}" result="c${n}"/>`;
+$('#lgd').insertAdjacentHTML('beforeend',`<filter id="${id}" x="0" y="0" width="${w}" height="${h}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="${bl}" edgeMode="duplicate" result="bl"/><feImage href="${u}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="none" result="m"/>${dm('r',s)+dm('g',s*.96)+dm('b',s*.92)}${ch('r','1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0')+ch('g','0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0')+ch('b','0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0')}<feBlend in="cr" in2="cg" mode="screen" result="rg"/><feBlend in="rg" in2="cb" mode="screen" result="rgb"/><feColorMatrix in="rgb" type="saturate" values="1.5"/></filter>`)}
+el.style.backdropFilter=el.style.webkitBackdropFilter=`url(#${id}) brightness(1.04)`}
+const ro=LQ&&new ResizeObserver(es=>es.forEach(e=>lens(e.target))),seen=new WeakSet;
+function glass(){if(LQ)document.querySelectorAll('header,.box,.chip,.hint').forEach(e=>{if(!seen.has(e)){seen.add(e);ro.observe(e)}})}
+if(LQ)new MutationObserver(glass).observe($('#msgs'),{childList:true});
+// 高光方向随手机左右倾斜变化
+let lt,la=150;addEventListener('deviceorientation',e=>{if(e.gamma==null||lt)return;const v=150+Math.max(-40,Math.min(40,e.gamma))*1.2;if(Math.abs(v-la)<2)return;la=v;lt=requestAnimationFrame(()=>{lt=0;document.documentElement.style.setProperty('--la',la+'deg')})},{passive:true});
+list();render();ui();pad();glass();if(!C().keys[C().p])openSet();
 </script></body></html>
